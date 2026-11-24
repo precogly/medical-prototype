@@ -131,3 +131,5 @@ Things to try:
 ## Not covered
 
 The diagram editor is unchanged and not mocked: the diagram here is view only. Use cases and data assets are summarized, not mocked. The TM-BOM export makes no file. No screenshots yet.
+
+
