@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Precogly Activity Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+  /* Swimlane of how activities flow in the medical prototype. Light only, to match the prototype. */
+  :root {
+    --page: #FAF8F5; --surface: #FFFFFF; --ink: #2D2317; --muted: #6E6253; --line: #EAE2D6;
+    --accent: #3B82F6; --amber: #B7791F; --amber-tint: #FDF3DC;
+    --font: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif; --mono: 'Geist Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+  main { max-width: 1440px; margin: 0 auto; padding: 28px 16px 64px; }
+  header.top { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  header.top img { width: 40px; height: 40px; }
+  h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 0 0 10px; }
+  .sub { color: var(--muted); margin: 4px 0 18px; max-width: 90ch; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin-top: 18px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 13px; color: var(--muted); }
+  .legend span.key { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { display: inline-block; width: 26px; height: 16px; border-radius: 5px; border: 1.5px solid #8A7B6B; background: #fff; }
+  .swatch.auto { border-style: dashed; border-color: #6B7280; }
+  .swatch.decision { width: 16px; height: 16px; border-radius: 2px; transform: rotate(45deg); border-color: #6B7280; border-style: dashed; background: #F4F4F5; }
+  .swatch.loop { background: var(--amber-tint); border-color: var(--amber); border-radius: 999px; }
+  .swatch.note { background: #F5F0E8; border-color: var(--line); border-radius: 999px; }
+  .badge { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; }
+  .esign { font-size: 11px; font-weight: 600; color: #5B2EA6; background: #EFE8FB; border-radius: 999px; padding: 0 7px; }
+  .diagram { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  /* Narrow screens scroll the diagram sideways; the lane header then stops pinning, which is fine there. */
+  @media (max-width: 1140px) { .diagram { overflow-x: auto; } .diagram-inner { min-width: 1100px; } }
+  .lane-head { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }
+  svg { display: block; width: 100%; height: auto; font-family: var(--font); }
+  ol.steps { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 12px; }
+  ol.steps li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+  ol.steps .who { color: var(--muted); font-size: 13px; }
+  .tag { display: inline-block; font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 500; }
+  .tablewrap { overflow-x: auto; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+  .grid2 .card { margin-top: 0; }
+  p { margin: 0 0 10px; }
+  a { color: #1E4FBF; }
+  .tip-target { cursor: help; outline: none; }
+  .tip-target .shape { transition: stroke-width .12s, filter .12s; }
+  .tip-target:hover .shape, .tip-target:focus-visible .shape { stroke-width: 3; filter: drop-shadow(0 3px 6px rgba(45, 35, 23, .18)); }
+  #tip { position: fixed; z-index: 20; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgba(45, 35, 23, .18); padding: 12px 14px; font-size: 13.5px; line-height: 1.45; pointer-events: none; }
+  #tip[hidden] { display: none; }
+  #tip .tip-head { display: flex; align-items: center; gap: 8px; }
+  #tip .tip-role { font-size: 12px; font-weight: 600; margin: 2px 0 8px 28px; }
+  #tip p { margin: 0 0 8px; }
+  #tip .tip-example { background: #F5F0E8; border-radius: 8px; padding: 8px 10px; }
+  #tip .tip-example span { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
+  @media print { .lane-head { position: static; } main { max-width: none; } #tip { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="top"><img src="precogly-owl.png" alt=""><div><h1>How the work flows</h1></div></header>
+  <p class="sub">The activities in the medical prototype, who does each one, and where they hand work to each other. Each column is a role; time runs down the page. Numbers match the steps listed below the diagram. <b style="color:var(--ink);font-weight:600">Hover over or tap any box</b> for what happens there, with an example from the prototype.</p>
+
+  <div class="legend" aria-label="Legend">
+    <span class="key"><span class="swatch"></span>Activity by a person</span>
+    <span class="key"><span class="swatch auto"></span>Done by Precogly</span>
+    <span class="key"><span class="swatch decision"></span>Decision made by Precogly</span>
+    <span class="key"><span class="esign">e-sign</span>Electronic signature (21 CFR Part 11)</span>
+    <span class="key"><span class="swatch loop"></span>Sends work back to an earlier step</span>
+    <span class="key"><span class="swatch note"></span>Note</span>
+    <span class="key"><span class="badge">3</span>Step number</span>
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-inner">
+      <div class="lane-head"><svg id="laneHead" viewBox="0 0 1400 48" role="presentation"></svg></div>
+      <svg id="flow" viewBox="0 0 1400 2590" role="img" aria-label="Swimlane diagram of the activity flow. The same steps are listed in text below."></svg>
+    </div>
+  </div>
+
+  <section class="card">
+    <h2>The steps</h2>
+    <ol class="steps" id="stepList"></ol>
+  </section>
+
+  <div class="grid2" style="margin-top:18px">
+    <section class="card">
+      <h2>Where the activities meet</h2>
+      <p class="sub" style="margin-top:0">These records are shared. One activity writes them and others read them, which is why nothing is copied by hand.</p>
+      <div class="tablewrap"><table>
+        <thead><tr><th>Shared record</th><th>Written in</th><th>Read in</th></tr></thead>
+        <tbody id="sharedRecords"></tbody>
+      </table></div>
+    </section>
+    <section class="card">
+      <h2>Continuous threat modeling</h2>
+      <p>Each feature gets its own blueprint, scoped to the parts of the system it touches. Engineers threat model it while they build the feature, and its countermeasures follow the same approval routing as step 5.</p>
+      <p>At release, the feature blueprints are merged into the product's system blueprint and Product Security signs off that version. The FDA expects a system-level threat model, and the risk assessment works on the whole product, so both use the merged version.</p>
+      <p>A feature with no security impact gets a quick "no new threats" sign-off from the Security Champion. A feature that touches a safety-relevant damage scenario, or adds a risk, triggers a risk assessment.</p>
+      <p class="sub" style="margin:0">Proposed: the prototype shows a design change as "Changes since approval" on the Clinician programmer threat model, but not feature blueprints yet. CycloneDX 2.0 allows several blueprints in one TM-BOM, each with its own scope and version.</p>
+    </section>
+  </div>
+</main>
+
+<div id="tip" role="tooltip" hidden></div>
+<script>
+(() => {
+  // ---------- Lanes (columns) and phases (bands down the page) ----------
+  const LANES = [
+    { name: 'Admin', color: '#8A7B6B', tint: '#F5F0E8' },
+    { name: 'Precogly', sub: 'automatic', color: '#6B7280', tint: '#F4F4F5', auto: true },
+    { name: 'Engineering', sub: 'with the Security Champion', color: '#2563EB', tint: '#EAF1FE' },
+    { name: 'Security Champion', color: '#2E9E62', tint: '#EAF6EE' },
+    { name: 'Product Security', sub: 'and risk owners', color: '#7C3AED', tint: '#F1EBFB' },
+    { name: 'Testers and suppliers', sub: 'outside the company', color: '#0E7490', tint: '#E6F4F7' },
+    { name: 'Regulatory Affairs', color: '#BE185D', tint: '#FBEAF2' }
+  ];
+  const LABEL_WIDTH = 120, LANE_WIDTH = 180, NODE_WIDTH = 164, LINE_HEIGHT = 15;
+  const laneX = lane => LABEL_WIDTH + LANE_WIDTH * lane + LANE_WIDTH / 2;
+  const PHASES = [
+    ['Set up', 20, 355], ['Threat model', 355, 1135], ['Risk', 'assessment', 1135, 1440], ['Test and', 'verify', 1440, 1730],
+    ['Feature work', '(continuous)', 1730, 2070], ['Submit', 2070, 2260], ['Postmarket', 2260, 2490], ['Repeat', 2490, 2580]
+  ].map(p => typeof p[1] === 'string' ? { lines: [p[0], p[1]], top: p[2], bottom: p[3] } : { lines: [p[0]], top: p[1], bottom: p[2] });
+
+  // ---------- Activities. lane: column, y: center, step: number, esign: needs an electronic signature ----------
+  const NODES = [
+    { id: 'setup', lane: 0, y: 95, step: 1, lines: ['Set up OUs and', 'portfolio items with', 'their attributes'] },
+    { id: 'assignStandards', lane: 4, y: 95, step: 2, lines: ['Assign standards and', 'procedures, with', 'a reason'] },
+    { id: 'assignLaws', lane: 6, y: 95, step: 2, lines: ['Assign laws and', 'regulations, with', 'a reason'] },
+    { id: 'damage', lane: 4, y: 255, step: 3, lines: ['Keep the damage', 'scenario library, from', 'the ISO 14971 harms'] },
+    { id: 'model', lane: 2, y: 400, step: 4, lines: ['Model the system', 'blueprint: zones, flows,', 'components, assumptions'] },
+    { id: 'threats', lane: 2, y: 495, step: 4, lines: ['Add threats as', 'scenarios, linked to', 'damage scenarios'] },
+    { id: 'propose', lane: 2, y: 590, step: 5, lines: ['Propose', 'countermeasures that', 'satisfy requirements'] },
+    { id: 'route', lane: 1, y: 695, step: 5, decision: true, lines: ['Safety relevant,', 'or high or critical?'] },
+    { id: 'approveChampion', lane: 3, y: 800, step: 5, esign: true, lines: ['Approve the', 'countermeasure'] },
+    { id: 'approveSecurity', lane: 4, y: 800, step: 5, esign: true, lines: ['Approve the', 'countermeasure'] },
+    { id: 'review', lane: 3, y: 900, step: 6, lines: ['Review the', 'threat model'] },
+    { id: 'freeze', lane: 4, y: 990, step: 6, esign: true, lines: ['Approve and freeze', 'the version'] },
+    { id: 'riskFile', lane: 1, y: 1085, step: 6, lines: ['Safety-relevant threats', 'go to the ISO 14971', 'risk file'] },
+    { id: 'rate', lane: 4, y: 1190, step: 7, lines: ['Raise and rate risks:', 'likelihood from threat', 'scenarios, impact from', 'damage scenarios'] },
+    { id: 'respond', lane: 4, y: 1295, step: 7, lines: ['Decide responses:', 'reduce, share, avoid', 'or accept'] },
+    { id: 'signRisk', lane: 4, y: 1390, step: 7, esign: true, lines: ['Sign off with a', 'conclusion: SW96 report'] },
+    { id: 'implement', lane: 2, y: 1500, step: 9, lines: ['Implement controls'] },
+    { id: 'pentest', lane: 5, y: 1500, step: 8, lines: ['Pen test'] },
+    { id: 'verify', lane: 3, y: 1585, step: 9, esign: true, lines: ['Verify with evidence', '(Champion, Privacy)'] },
+    { id: 'triage', lane: 4, y: 1585, step: 8, lines: ['Findings become', 'vulnerabilities:', 'triage'] },
+    { id: 'status', lane: 1, y: 1680, step: 9, lines: ['Requirement status', 'updates itself'] },
+    { id: 'feature', lane: 2, y: 1790, step: 10, lines: ['Threat model each', 'feature in its own', 'feature blueprint'] },
+    { id: 'merge', lane: 2, y: 1895, step: 10, lines: ['Merge into the', 'system blueprint', 'at release'] },
+    { id: 'signChanges', lane: 4, y: 1995, step: 10, esign: true, lines: ['Sign off changes;', 'freeze the release', 'version'] },
+    { id: 'evidence', lane: 1, y: 2125, step: 11, lines: ['Claim lists collect', 'evidence from signed', 'engagements'] },
+    { id: 'attest', lane: 6, y: 2125, step: 11, esign: true, lines: ['Attest and sign', 'each claim list'] },
+    { id: 'package', lane: 6, y: 2215, step: 11, lines: ['Generate the package:', 'TM-BOM and PDFs'] },
+    { id: 'advisory', lane: 5, y: 2320, step: 12, lines: ['Supplier advisory'] },
+    { id: 'match', lane: 1, y: 2320, step: 12, lines: ['Match against', 'the SBOM'] },
+    { id: 'analyze', lane: 4, y: 2415, step: 12, lines: ['Analyze: exploitable,', 'or not affected'] },
+    { id: 'reportable', lane: 6, y: 2415, step: 12, esign: true, lines: ['Decide whether to', 'report to the FDA'] }
+  ];
+  // ---------- What happens in each box, with an example from the prototype's data ----------
+  const TIPS = {
+    setup: ['The Admin builds the OU tree and adds portfolio items. Each item gets an owning OU and attributes that describe it.',
+      'Omar Haddad adds “DBS clinician programmer” as a Device under the DBS therapy family, owned by the DBS Programmer team. Attributes: FDA Class III (PMA supplement), IEC 62304 safety class C, cyber device, markets US and EU, handles PHI.'],
+    assignStandards: ['Product Security decides which standards and company procedures apply, and records why. Items below the one it is assigned to inherit it.',
+      'Ben Okafor assigns AAMI SW96 to the DBS therapy product family with the reason “Software safety class C.” The DBS clinician programmer inherits it, so it gets the SW96 requirements for security risk management.'],
+    assignLaws: ['Regulatory Affairs decides which laws and regulations apply to a product, and records why. The decision is in the audit log.',
+      'Ines Duarte adds the EU market to the DBS clinician programmer, so it shows under “Packs to review”. Lena Petrova assigns the EU MDR pack (Annex I §17, MDCG 2019-16) to it: “EU market added on 2 Nov 2026; CE marking under the MDR.” The device gets the EU MDR requirements, and the EU MDR claim list appears on its Submissions tab.'],
+    model: ['Engineers draw the system: trust zones, components, data flows and the data they carry, plus the assumptions the model relies on.',
+      'NeuroLink system threat model v3 has four trust zones: Clinic (TL 60), Implanted (TL 90), Patient home (TL 30) and Acme cloud (TL 70). “Therapy commands” flows from the clinician programmer app to the implant over BLE 5.2, with mutual authentication. One assumption, “Hospital Wi-Fi blocks device-to-device traffic”, turned out false in 2 of 5 pilot clinics.'],
+    threats: ['For each component and flow, engineers add threats from the threat libraries. Each one is a scenario: who attacks, how, and what it can lead to.',
+      'T-16 “Captured therapy command replayed over Bluetooth LE” uses the library threat “Replay of captured messages” (STRIDE tampering, CWE-294, CAPEC-60). The actor is a nearby attacker within Bluetooth range, and it can lead to DS-1 “Unintended stimulation”, a safety impact rated catastrophic.'],
+    propose: ['An engineer proposes a control for an exposed threat: one the item already has, one from the control library, or a new one. The control satisfies requirements.',
+      'Erik Lund proposes “Session nonces with a replay window” from the control library for T-16. It satisfies IEC 81001-5-1 §5.2, and that requirement is recorded on the NeuroLink implant system.'],
+    route: ['Precogly picks the approver from the threat’s risk level and its damage scenarios. Nobody chooses, and the proposer never approves their own proposal.',
+      'T-16 can lead to unintended stimulation, a safety damage scenario, so Erik’s proposal goes to Ben Okafor (Product Security). Erik’s proposal to accept T-21 “Expired certificate accepted by the BLE bridge” is low risk with no safety impact, so it goes to Carla Jansen (Security Champion).'],
+    approveChampion: ['The Security Champion approves, requests changes or rejects, with a reason. Approving is an electronic signature.',
+      'Carla Jansen reviews Erik’s proposal to accept T-21: the bridge pins the clinician app certificate, so the residual risk is low and there is no path to patient harm. She approves and signs.'],
+    approveSecurity: ['Product Security approves proposals with a safety impact or a high or critical risk. The signature records who, when and what it means (21 CFR Part 11).',
+      'Ben Okafor approves “Session nonces with a replay window” for T-16 and signs with the meaning “Approval”. Because T-16 is safety relevant, the decision is also copied to the ISO 14971 risk file.'],
+    review: ['The Security Champion checks that the threat model is complete before it goes for approval.',
+      'Carla Jansen marks NeuroLink system threat model v3 reviewed on 10 Aug 2026. The completion status shows 12 threats (3 still exposed), every countermeasure linked to a requirement, and 6 of 7 components linked to an SBOM entry.'],
+    freeze: ['Product Security approves the threat model. That version is frozen: later edits go into a new version, and the approved one is kept for audit.',
+      'Ben Okafor approves NeuroLink v3 on 12 Aug 2026. Version 3 is frozen and valid until Aug 2027. Any change after that shows as “Changes since approval” in version 4.'],
+    riskFile: ['Precogly copies threats whose damage scenarios have a safety or health impact to the ISO 14971 safety risk file, so safety and security stay in step.',
+      'T-33 “Remote programming session hijacked”, new in the Clinician programmer model, can lead to unintended stimulation. It is copied to the risk file when the changes are signed off.'],
+    rate: ['Product Security and risk owners raise risks and rate them. The likelihood comes from threat scenarios and the impact from damage scenarios.',
+      'R-12 “Unauthorized therapy change over Bluetooth” on NeuroLink: likelihood high (from T-3, T-15 and T-16) × impact catastrophic (from DS-1 unintended stimulation) gives Critical 20 before any controls. With mutual authentication verified, the residual is Medium 10. The target is Low 5.'],
+    respond: ['For each risk, the owner decides responses: reduce it with controls, share it, avoid it, or accept it. Accepting a risk above the appetite needs a benefit-risk analysis.',
+      'R-12 (owner Carla Jansen): reduce with “Mutual authentication on pairing” (verified) and “Signed, fresh therapy commands” (planned). It stays above the safety appetite, low or below, until the signed commands are in. For R-7 on the DBS programmer, Ines Duarte proposes to accept: replacing the programmer now would interrupt therapy for 1,200 patients.'],
+    signRisk: ['Product Security signs off the assessment with a conclusion: acceptable, unacceptable or inconclusive. The signed snapshot is the AAMI SW96 report.',
+      'Ben Okafor signed NeuroLink security risk assessment Q3 2026 on 30 Sep 2026 with the conclusion “Acceptable”. The register shows “Inconclusive” today, because R-4, R-17 and R-18 have no residual rating yet.'],
+    implement: ['Engineers build the approved controls and attach the evidence that they work.',
+      'Erik Lund builds “Signed, fresh therapy commands” in the implant firmware and the programmer app. The evidence is the protocol test: 0 of 1,000 replayed or unsigned commands accepted.'],
+    pentest: ['An outside test lab runs a penetration test. It counts as security testing under IEC 81001-5-1 §5.7.',
+      'NeuroLink pen test 2026 (September 2026) found 3 issues, scored with CVSS and the medical device rubric. One is F-4 “Implant accepts a firmware downgrade to a signed older version”, CVSS 6.8.'],
+    verify: ['The Security Champion, or Privacy for privacy controls, checks the evidence and marks the control verified with an e-signature.',
+      'Dev Sharma (Privacy) verifies “De-identify neural recordings” for T-18 against HIPAA 164.514(b) and signs with the meaning “Verification”. If the control changes later, it goes back to Implemented.'],
+    triage: ['Each finding becomes a vulnerability with an analysis state. Product Security checks whether the threat model predicted it.',
+      'F-3 (a clinician can read other clinics’ patients, CVSS 7.4) matches threat T-8, so the model predicted it. It is exploitable, with a fix deployed and a retest pending. F-4 matches no threat, so the model missed it: it is added as T-25 and raises risk R-17.'],
+    status: ['Precogly works out each requirement’s status from its controls and approved decisions. Nobody sets it by hand.',
+      '“Firmware updates are signed and verified before install” (524B(b)(2)) on NeuroLink shows Met, because “Code signing in HSM” is verified. “Provide a machine-readable SBOM” stays In progress while “SBOM generated in CI” is overdue.'],
+    feature: ['Proposed. Each feature gets its own small blueprint, scoped to the parts of the system it touches. Engineers threat model it while they build the feature.',
+      'Tom Visser’s team builds remote programming for the Clinician programmer app. Its blueprint adds the “Remote session relay” component, the “Remote programming session” flow, and threat T-33 “Remote programming session hijacked”. T-33 can lead to unintended stimulation, so its countermeasure goes to Product Security.'],
+    merge: ['Proposed. At release, the feature blueprints are merged into the product’s system blueprint, which becomes the next version.',
+      'The remote programming blueprint is merged into the Clinician programmer system blueprint. Version 3 now has 4 threats and 2 data flows that changed since version 2.'],
+    signChanges: ['Product Security reviews what changed since the last approval and signs it off, which freezes the release version. A safety-relevant change or a new risk triggers a risk assessment.',
+      'Ben Okafor signs off the Clinician programmer changes and freezes version 3. T-33 is safety relevant, so “Clinician programmer risk assessment 2026” runs, triggered by “Design change: remote programming added”.'],
+    evidence: ['Each claim list collects its evidence from signed engagements. A claim is only as ready as its evidence.',
+      'On NeuroLink’s FDA list, the claim “Threat model” takes its evidence from NeuroLink system threat model v3 and the Clinician programmer threat model. “Software bill of materials” takes it from the components linked to SBOM entries: 8 of 10 so far.'],
+    attest: ['Regulatory Affairs attests to each claim (full, partial or no conformance, with a confidence level) and signs the list.',
+      'Lena Petrova attests to NeuroLink’s EU MDR list: 1 claim full, 4 partial, 1 not yet met. She signs with the meaning “Attestation”, and the open claims stay visible in the package.'],
+    package: ['Precogly generates the package: one signed TM-BOM (CycloneDX 2.0) for the device version, plus the PDF documents.',
+      'For NeuroLink’s PMA, the package has the TM-BOM, the threat model, the security architecture views, the SW96 report and the traceability matrix, for the cybersecurity section of the submission.'],
+    advisory: ['A supplier or an open-source project publishes a security advisory about a part used in the device.',
+      'The Bluetooth chip vendor publishes advisory SA-2026-07 on 14 Oct 2026: on some chip firmware versions, a nearby device can skip pairing.'],
+    match: ['Precogly matches the advisory against each product’s SBOM, and creates a vulnerability on every product that uses the affected part.',
+      'The advisory names the chip and its firmware versions. Precogly finds them in the SBOM of the Wearable BLE bridge and the implant firmware, and creates V-7 on NeuroLink, in triage.'],
+    analyze: ['Product Security decides whether the product is affected. Exploitable vulnerabilities raise a risk; “not affected” decisions are shared with hospitals as VEX.',
+      'V-7 is in triage while the team checks which chip versions ship in the field; risk R-18 was raised so the risk team can rate it meanwhile. V-8, a TLS library flaw, is “not affected”: the bridge never calls the vulnerable code.'],
+    damage: ['Product Security keeps a shared library of damage scenarios: the bad outcomes threats can lead to, each with an impact per category. In medical devices they come from the harms already listed in the ISO 14971 safety risk analysis. Engineers pick from the library; they do not create damage scenarios.',
+      'DS-1 “Unintended stimulation” comes from harm H-02 in the NeuroLink and DBS hazard analyses. Anna de Vries rates its safety impact catastrophic, together with safety engineering, and every product can use it. The PACS team adds DS-5 “Imaging studies unavailable” for the PACS archive only.'],
+    reportable: ['Regulatory Affairs decides whether an exploitable vulnerability that can lead to a safety damage scenario must be reported to the FDA (21 CFR 806), and records why with an e-signature.',
+      'F-4 (the implant accepts a firmware downgrade) can lead to unintended stimulation. Lena Petrova decides it is not reportable: the risk is uncontrolled, but clinics were told within 30 days, the fix ships within 60 days and Acme takes part in an ISAO, as the FDA postmarket cybersecurity guidance allows. The eQMS gets the decision as a CAPA input.'],
+    repeat: ['The cycle never ends: reviews come due, designs change and new vulnerabilities arrive.',
+      'NeuroLink’s next risk assessment is due Q3 2027. The DBS clinician programmer’s threat model review has been overdue since Sep 2026, so it shows under “Needs attention”.']
+  };
+  const nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
+  NODES.forEach(n => { n.x = laneX(n.lane); n.w = n.decision ? 176 : NODE_WIDTH; n.h = n.decision ? 96 : Math.max(46, 16 + LINE_HEIGHT * n.lines.length); });
+  const anchor = (id, side) => { const n = nodeById[id]; return { top: [n.x, n.y - n.h / 2], bottom: [n.x, n.y + n.h / 2], left: [n.x - n.w / 2, n.y], right: [n.x + n.w / 2, n.y] }[side]; };
+
+  // ---------- Hand-offs. Points run from the first anchor, through the bends, to the last anchor ----------
+  const EDGES = [
+    { from: ['setup', 'right'], to: ['assignStandards', 'left'] },
+    { from: ['setup', 'top'], via: [[210, 38], [1290, 38]], to: ['assignLaws', 'top'] },
+    { from: ['assignStandards', 'bottom'], via: [[930, 150], [570, 150]], to: ['model', 'top'], label: 'requirements and claim lists', labelAt: [750, 142] },
+    { from: ['assignLaws', 'bottom'], via: [[1290, 150]], end: [930, 150], plain: true, dot: true },
+    { from: ['damage', 'bottom'], via: [[930, 495]], to: ['threats', 'right'], label: 'picked when adding threats', labelAt: [790, 487] },
+    { from: ['model', 'bottom'], to: ['threats', 'top'] },
+    { from: ['threats', 'bottom'], to: ['propose', 'top'] },
+    { from: ['propose', 'left'], via: [[390, 590]], to: ['route', 'top'] },
+    { from: ['route', 'right'], via: [[930, 695]], to: ['approveSecurity', 'top'], label: 'Yes', labelAt: [700, 685] },
+    { from: ['route', 'bottom'], via: [[390, 800]], to: ['approveChampion', 'left'], label: 'No: low or medium', labelAt: [530, 791] },
+    { from: ['approveChampion', 'bottom'], to: ['review', 'top'] },
+    { from: ['approveSecurity', 'bottom'], via: [[930, 900]], to: ['review', 'right'] },
+    { from: ['review', 'bottom'], via: [[750, 990]], to: ['freeze', 'left'] },
+    { from: ['freeze', 'bottom'], to: ['rate', 'top'] },
+    { start: [930, 1085], to: ['riskFile', 'right'], dot: true },
+    { from: ['rate', 'bottom'], to: ['respond', 'top'] },
+    { from: ['respond', 'bottom'], to: ['signRisk', 'top'] },
+    { from: ['signRisk', 'bottom'], via: [[930, 1455], [570, 1455]], to: ['implement', 'top'], label: 'controls to build', labelAt: [750, 1447] },
+    { from: ['implement', 'bottom'], via: [[570, 1585]], to: ['verify', 'left'] },
+    { from: ['pentest', 'bottom'], via: [[1110, 1585]], to: ['triage', 'right'] },
+    { from: ['verify', 'bottom'], via: [[750, 1680]], to: ['status', 'right'] },
+    { from: ['feature', 'bottom'], to: ['merge', 'top'] },
+    { from: ['merge', 'bottom'], via: [[570, 1995]], to: ['signChanges', 'left'] },
+    { from: ['evidence', 'right'], to: ['attest', 'left'], label: 'evidence', labelAt: [840, 2116] },
+    { from: ['attest', 'bottom'], to: ['package', 'top'] },
+    { from: ['advisory', 'left'], to: ['match', 'right'] },
+    { from: ['match', 'bottom'], via: [[390, 2415]], to: ['analyze', 'left'] },
+    { from: ['analyze', 'right'], to: ['reportable', 'left'], label: 'exploitable, safety impact', labelAt: [1110, 2407] }
+  ];
+
+  // ---------- Pills: loops back to earlier steps (amber) and notes (tan), each tied to an activity ----------
+  const PILLS = [
+    { node: 'setup', at: [390, 150], text: 'Flags changed attributes' },
+    { node: 'respond', at: [750, 1295], text: '↺ to 5: reduce adds a control', loop: true },
+    { node: 'respond', at: [1110, 1295], text: 'Accept above appetite: benefit-risk' },
+    { node: 'triage', at: [930, 1642], text: '↺ to 4: missed by the model', loop: true },
+    { node: 'triage', at: [930, 1670], text: '↺ to 7: raise a risk', loop: true, noLine: true },
+    { node: 'feature', at: [750, 1790], text: 'Approval routing as in 5' },
+    { node: 'signChanges', at: [930, 2050], text: '↺ to 7: safety relevant or new risk', loop: true },
+    { node: 'analyze', at: [930, 2462], text: '↺ to 7: exploitable raises a risk', loop: true },
+    { node: 'analyze', at: [1150, 2462], text: 'Not affected: shared as VEX' }
+  ];
+
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const escapeText = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const textLines = (lines, x, y, attrs) => { const first = y - (lines.length - 1) * LINE_HEIGHT / 2 + 4; return `<text x="${x}" text-anchor="middle" ${attrs}>${lines.map((line, index) => `<tspan x="${x}" y="${first + index * LINE_HEIGHT}">${escapeText(line)}</tspan>`).join('')}</text>`; };
+  const pillWidth = text => text.length * 6.1 + 22;
+
+  // Lane header, pinned while scrolling.
+  document.getElementById('laneHead').innerHTML = LANES.map((lane, index) => {
+    const x = laneX(index);
+    return `<rect x="${x - LANE_WIDTH / 2 + 4}" y="6" width="${LANE_WIDTH - 8}" height="36" rx="8" fill="${lane.tint}" stroke="${lane.color}" stroke-opacity=".35"/>
+      <text x="${x}" y="${lane.sub ? 22 : 28}" text-anchor="middle" font-size="13" font-weight="600" fill="${lane.color}">${lane.name}</text>
+      ${lane.sub ? `<text x="${x}" y="36" text-anchor="middle" font-size="10.5" fill="#6E6253">${lane.sub}</text>` : ''}`;
+  }).join('') + `<text x="12" y="28" font-size="11" fill="#6E6253" letter-spacing=".05em">PHASE</text>`;
+
+  const parts = [];
+  parts.push(`<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#8A7B6B"/></marker></defs>`);
+  // Lane stripes.
+  LANES.forEach((lane, index) => parts.push(`<rect x="${LABEL_WIDTH + LANE_WIDTH * index}" y="0" width="${LANE_WIDTH}" height="2590" fill="${index % 2 ? '#FCFAF7' : '#FFFFFF'}"/><line x1="${LABEL_WIDTH + LANE_WIDTH * index}" y1="0" x2="${LABEL_WIDTH + LANE_WIDTH * index}" y2="2590" stroke="#EAE2D6"/>`));
+  // Phase bands.
+  PHASES.forEach((phase, index) => {
+    parts.push(`<line x1="0" y1="${phase.top}" x2="1400" y2="${phase.top}" stroke="#EAE2D6" ${index ? '' : 'stroke-opacity="0"'}/>`);
+    parts.push(`<text x="14" y="${phase.top + 26}" font-size="13" font-weight="600" fill="#2D2317">${phase.lines.map((line, lineIndex) => `<tspan x="14" dy="${lineIndex ? 16 : 0}">${line}</tspan>`).join('')}</text>`);
+  });
+  // Hand-offs, drawn under the activities.
+  EDGES.forEach(edge => {
+    // An edge starts at an anchor or a junction (start), and ends at an anchor or joins another line (end, drawn without an arrow).
+    const points = [edge.start || anchor(...edge.from), ...(edge.via || []), edge.end || anchor(...edge.to)];
+    parts.push(`<polyline points="${points.map(p => p.join(',')).join(' ')}" fill="none" stroke="#8A7B6B" stroke-width="1.5" ${edge.plain ? '' : 'marker-end="url(#arrow)"'}/>`);
+    if (edge.dot) { const junction = edge.start || edge.end; parts.push(`<circle cx="${junction[0]}" cy="${junction[1]}" r="3.5" fill="#8A7B6B"/>`); }
+    if (edge.label) { const width = pillWidth(edge.label) - 6; parts.push(`<rect x="${edge.labelAt[0] - width / 2}" y="${edge.labelAt[1] - 11}" width="${width}" height="18" rx="9" fill="#FFFFFF" stroke="#EAE2D6"/><text x="${edge.labelAt[0]}" y="${edge.labelAt[1] + 2}" text-anchor="middle" font-size="11" fill="#6E6253">${edge.label}</text>`); }
+  });
+  // Pills, with a short dotted tie to their activity.
+  PILLS.forEach(pill => {
+    const node = nodeById[pill.node]; const width = pillWidth(pill.text);
+    if (!pill.noLine) { const sameRow = Math.abs(pill.at[1] - node.y) < 4; const from = sameRow ? [pill.at[0] < node.x ? node.x - node.w / 2 : node.x + node.w / 2, node.y] : [node.x, node.y + node.h / 2]; const to = sameRow ? [pill.at[0] < node.x ? pill.at[0] + width / 2 : pill.at[0] - width / 2, pill.at[1]] : [pill.at[0], pill.at[1] - 10]; parts.push(`<line x1="${from[0]}" y1="${from[1]}" x2="${to[0]}" y2="${to[1]}" stroke="${pill.loop ? '#B7791F' : '#C9BBA7'}" stroke-dasharray="3 3"/>`); }
+    parts.push(`<rect x="${pill.at[0] - width / 2}" y="${pill.at[1] - 10}" width="${width}" height="20" rx="10" fill="${pill.loop ? '#FDF3DC' : '#F5F0E8'}" stroke="${pill.loop ? '#B7791F' : '#EAE2D6'}"/><text x="${pill.at[0]}" y="${pill.at[1] + 4}" text-anchor="middle" font-size="11" font-weight="${pill.loop ? 600 : 400}" fill="${pill.loop ? '#7A4F0E' : '#6E6253'}">${escapeText(pill.text)}</text>`);
+  });
+  // Activities.
+  // Activities. Each one is a focusable group that shows its explanation on hover, focus or tap.
+  NODES.forEach(n => {
+    const lane = LANES[n.lane]; const shape = [];
+    if (n.decision) {
+      shape.push(`<polygon class="shape" points="${n.x},${n.y - n.h / 2} ${n.x + n.w / 2},${n.y} ${n.x},${n.y + n.h / 2} ${n.x - n.w / 2},${n.y}" fill="#F4F4F5" stroke="#6B7280" stroke-width="1.5" stroke-dasharray="5 3"/>`);
+      shape.push(textLines(n.lines, n.x, n.y, 'font-size="11.5" font-weight="600" fill="#2D2317"'));
+    } else {
+      shape.push(`<rect class="shape" x="${n.x - n.w / 2}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="10" fill="#FFFFFF" stroke="${lane.color}" stroke-width="1.6" ${lane.auto ? 'stroke-dasharray="5 3"' : ''}/>`);
+      shape.push(textLines(n.lines, n.x, n.y, 'font-size="12" font-weight="500" fill="#2D2317"'));
+    }
+    const badgeX = n.decision ? n.x - 30 : n.x - n.w / 2, badgeY = n.decision ? n.y - n.h / 2 + 8 : n.y - n.h / 2;
+    shape.push(`<circle cx="${badgeX}" cy="${badgeY}" r="10" fill="#2D2317"/><text x="${badgeX}" y="${badgeY + 4}" text-anchor="middle" font-size="10.5" font-weight="600" fill="#FFFFFF">${n.step}</text>`);
+    if (n.esign) shape.push(`<rect x="${n.x + n.w / 2 - 48}" y="${n.y - n.h / 2 - 9}" width="44" height="17" rx="8.5" fill="#EFE8FB" stroke="#7C3AED" stroke-opacity=".4"/><text x="${n.x + n.w / 2 - 26}" y="${n.y - n.h / 2 + 3}" text-anchor="middle" font-size="10" font-weight="600" fill="#5B2EA6">e-sign</text>`);
+    parts.push(`<g class="tip-target" data-tip="${n.id}" tabindex="0" role="button" aria-label="Step ${n.step}: ${escapeText(n.lines.join(' '))}. Show details">${shape.join('')}</g>`);
+  });
+  // Repeat banner.
+  parts.push(`<g class="tip-target" data-tip="repeat" tabindex="0" role="button" aria-label="Step 13: repeat. Show details"><rect class="shape" x="${LABEL_WIDTH + 10}" y="2510" width="${1400 - LABEL_WIDTH - 30}" height="50" rx="12" fill="#FDF3DC" stroke="#B7791F"/><circle cx="${LABEL_WIDTH + 36}" cy="2535" r="11" fill="#2D2317"/><text x="${LABEL_WIDTH + 36}" y="2539" text-anchor="middle" font-size="11" font-weight="600" fill="#FFFFFF">13</text><text x="${LABEL_WIDTH + 56}" y="2540" font-size="13.5" font-weight="500" fill="#7A4F0E">Yearly reviews, design changes and new vulnerabilities send work back to steps 4, 7 and 12.</text></g>`);
+  document.getElementById('flow').innerHTML = parts.join('');
+
+  // ---------- Tooltip: follows the mouse, sits next to a focused box, and stays open after a tap until the next tap ----------
+  const tip = document.getElementById('tip');
+  let pinned = null;
+  function fillTip(id) {
+    const node = nodeById[id]; const [what, example] = TIPS[id];
+    const lane = node ? LANES[node.lane] : { name: 'Everyone', color: '#7A4F0E' };
+    const title = node ? node.lines.join(' ') : 'Repeat';
+    tip.innerHTML = `<div class="tip-head"><span class="badge">${node ? node.step : 13}</span><b>${escapeText(title)}</b></div><div class="tip-role" style="color:${lane.color}">${lane.name}${node && node.esign ? ' · e-signature' : ''}</div><p>${escapeText(what)}</p><div class="tip-example"><span>Example</span>${escapeText(example)}</div>`;
+    tip.hidden = false;
+  }
+  function placeAt(x, y) {
+    const margin = 14, box = tip.getBoundingClientRect();
+    let left = x + margin, top = y + margin;
+    if (left + box.width > window.innerWidth - 8) left = Math.max(8, x - box.width - margin);
+    if (top + box.height > window.innerHeight - 8) top = Math.max(8, y - box.height - margin);
+    tip.style.left = `${left}px`; tip.style.top = `${top}px`;
+  }
+  function placeBeside(element) { const box = element.getBoundingClientRect(); placeAt(box.right - 8, box.top + 8); }
+  function hideTip() { tip.hidden = true; pinned = null; }
+  const flow = document.getElementById('flow');
+  flow.addEventListener('mousemove', e => { if (pinned) return; const target = e.target.closest('[data-tip]'); if (!target) { tip.hidden = true; return; } if (tip.dataset.for !== target.dataset.tip || tip.hidden) { fillTip(target.dataset.tip); tip.dataset.for = target.dataset.tip; } placeAt(e.clientX, e.clientY); });
+  flow.addEventListener('mouseleave', () => { if (!pinned) tip.hidden = true; });
+  flow.addEventListener('focusin', e => { const target = e.target.closest('[data-tip]'); if (!target) return; fillTip(target.dataset.tip); tip.dataset.for = target.dataset.tip; placeBeside(target); });
+  flow.addEventListener('focusout', () => { if (!pinned) tip.hidden = true; });
+  flow.addEventListener('click', e => { const target = e.target.closest('[data-tip]'); if (!target) { hideTip(); return; } if (pinned === target.dataset.tip) { hideTip(); return; } pinned = target.dataset.tip; fillTip(pinned); tip.dataset.for = pinned; placeBeside(target); });
+  flow.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-tip]')) { e.preventDefault(); e.target.closest('[data-tip]').dispatchEvent(new MouseEvent('click', { bubbles: true })); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
+  document.addEventListener('click', e => { if (!e.target.closest('#flow') && !e.target.closest('#tip')) hideTip(); });
+  window.addEventListener('scroll', () => { if (!pinned) tip.hidden = true; }, { passive: true });
+
+  // ---------- The steps in words ----------
+  const STEPS = [
+    ['Set up', 'Admin', 'Build the OU tree and the portfolio. Each item gets attributes, such as device class, IEC 62304 safety class, markets and whether it handles PHI.'],
+    ['Assign packs', 'Regulatory Affairs, Product Security', 'Regulatory Affairs assigns laws and regulations; Product Security assigns standards and company procedures. Each assignment has a reason and is inherited by the items below. The item gets the pack’s requirements, and a pack that leads to a submission adds its claim list. Precogly never assigns a pack by itself: it only flags items whose attributes changed since their packs were last reviewed.'],
+    ['Define damage scenarios', 'Product Security, with safety engineering', 'Product Security keeps a shared library of damage scenarios: the bad outcomes threats can lead to, each with an impact per category. In medical devices they come from the harms already listed in the ISO 14971 safety risk analysis, and from the privacy impact assessment. A product can add its own. Engineers pick from the library; they do not create damage scenarios.'],
+    ['Threat model the system', 'Engineering, with the Security Champion', 'Model the system blueprint: trust zones, data flows, components linked to the SBOM, and assumptions. Add threats as scenarios of library threats, each linked to the damage scenarios it can lead to, picked from the library (step 3). Each threat addresses a requirement, which appears on the item’s Requirements tab.'],
+    ['Countermeasures', 'Engineering, then an approver', 'Propose controls that satisfy requirements. Precogly routes the approval: the Security Champion for low or medium risk, Product Security for high or critical risk or a safety-relevant damage scenario. The proposer never approves their own proposal, and with no approver in the OU it goes to the OU above.'],
+    ['Approve the threat model', 'Security Champion, Product Security', 'The Champion reviews. Product Security approves with an e-signature, and the version is frozen. Safety-relevant threats are copied to the ISO 14971 risk file.'],
+    ['Risk assessment', 'Product Security and risk owners', 'Raise risks from threat scenarios (likelihood) and damage scenarios (impact), rate them, set targets and decide responses. Reducing a risk adds a control (back to 5); accepting one above the appetite needs a benefit-risk analysis. A risk can create a requirement of its own. Sign off with a conclusion, which produces the AAMI SW96 report. Accepting a safety risk asks Regulatory Affairs for input through a task.'],
+    ['Pen test', 'Tester, Product Security', 'Findings become vulnerabilities, and each one creates a requirement. Product Security triages them: a finding the model missed becomes a new threat (back to 4), and an exploitable one can raise a risk (back to 7).'],
+    ['Implement and verify', 'Engineering, Security Champion, Privacy', 'Engineers implement controls. The Champion, or Privacy for privacy controls, verifies each one with evidence. Requirement status updates itself.'],
+    ['Feature work', 'Engineering, Product Security', 'Each feature gets its own blueprint, threat modeled while it is built, with the same approval routing as step 5. At release it is merged into the system blueprint and Product Security signs off the changes, freezing the release version. A safety-relevant change or a new risk triggers a risk assessment (back to 7).', 'Proposed'],
+    ['Submissions', 'Regulatory Affairs', 'Each claim list collects its evidence from signed engagements. Regulatory Affairs attests to each list, signs it and generates the package: the TM-BOM and the PDF documents. Regulatory Affairs reads signed versions only: no drafts, and no working in threat models or risk registers.'],
+    ['Postmarket', 'Suppliers, Precogly, Product Security, Regulatory Affairs', 'Supplier advisories are matched against the SBOM. Product Security analyzes each one: if exploitable it raises a risk (back to 7); if not affected it is shared with hospitals as VEX. For an exploitable one with a safety impact, Regulatory Affairs decides whether it must be reported to the FDA (21 CFR 806) and signs the decision.'],
+    ['Repeat', 'Everyone', 'Yearly reviews, design changes and new vulnerabilities send work back to steps 4, 7 and 12.']
+  ];
+  document.getElementById('stepList').innerHTML = STEPS.map(([title, who, text, tag], index) => `<li><span class="badge" style="margin-top:2px">${index + 1}</span><div><b>${title}</b>${tag ? `<span class="tag">${tag}</span>` : ''} <span class="who">· ${who}</span><div>${text}</div></div></li>`).join('');
+
+  const SHARED = [
+    ['Requirements and claim lists', '2', '5 (what controls satisfy), 11 (claims)'],
+    ['Damage scenarios', '3 (defined, impact rated)', '4 (linked to threats), 5 (approval routing), 6 (ISO 14971 risk file), 7 (impact)'],
+    ['Threat scenarios', '4, 10', '7 (likelihood), 8 (findings the model predicted)'],
+    ['Controls', '5, 7 (responses)', '9 (implement and verify), 11 (evidence)'],
+    ['Vulnerabilities', '8, 12', '4 (missed threats), 7 (risks)'],
+    ['Signed versions and sign-offs', '6, 7, 10', '11 (evidence for the claims)']
+  ];
+  document.getElementById('sharedRecords').innerHTML = SHARED.map(([record, written, read]) => `<tr><td><b>${record}</b></td><td>${written}</td><td>${read}</td></tr>`).join('');
+})();
+</script>
+</body>
+</html>
